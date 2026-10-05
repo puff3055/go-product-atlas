@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {extraSections} from './extra-sections.mjs';
+import {productMap} from './product-map.mjs';
 const [root,generated]=process.argv.slice(2);
 if(!root||!generated)throw new Error('Usage: node build.mjs <native-project-root> <generated-images-root>');
 const out=path.resolve('dist');
@@ -68,7 +69,7 @@ for(const file of ['index.html','current.html','alternatives.html','reference.ht
  const filePath=path.join(out,file);fs.writeFileSync(filePath,fs.readFileSync(filePath,'utf8').replace('</nav>','<a href="/ip.html">IP 角色</a><a href="/empty-states.html">缺省状态</a></nav>'));
 }
 // One long document everywhere; old URLs remain compatible, never secondary views.
-const sectionNav='<header><nav aria-label="本页章节定位"><a class="brand" href="#top">go!</a><a href="#current">当前产品</a><a href="#alternatives">备选设计</a><a href="#ip">IP 角色</a><a href="#empty-states">缺省状态</a><a href="#archive">历史图册</a></nav></header>';
+const sectionNav='<header><nav aria-label="本页章节定位"><a class="brand" href="#top">go!</a><a href="#product-map">产品全景</a><a href="#current">当前产品</a><a href="#alternatives">备选设计</a><a href="#ip">IP 角色</a><a href="#empty-states">缺省状态</a><a href="#archive">历史图册</a></nav></header>';
 let single=fs.readFileSync(path.join(out,'read.html'),'utf8')
  .replace(/<header>[\s\S]*?<\/header>/,sectionNav)
  .replace('<main>','<main id="top">')
@@ -86,12 +87,16 @@ single=single.replace(extras.empties,extras.empties.replace('全部直接展开�
 single=single.replace(/<p><a href="\/pages\/[^\"]+">独立说明<\/a><\/p>/g,'').replace('单页链接方便定位，不隐藏额外规则。','顶部导航只定位本页章节，不打开二级页面。').replace('首页只有“输入→生成一行→完成／撤销→重置”的局部模拟；','本页不再提供输入模拟，全部以静态图文展示；').replace('有操作能力也只能运行网站实际实现的模拟。','本页不依赖任何浏览器操作能力。');
 // Earlier string rewriting left an unstyled duplicate after the reading section.
 for(const id of ['ip','empty-states']){let seen=false;single=single.replace(new RegExp(`<section id="${id}">[\\s\\S]*?<\\/section>`,'g'),section=>{if(seen)return '';seen=true;return section;});}
+single=single.replace(intro,productMap+intro);
+// Version the existing CSS URL so an earlier cached stylesheet cannot hide the update.
+const cssVersion=crypto.createHash('sha256').update(fs.readFileSync(path.join(out,'style.css'))).digest('hex').slice(0,12);
+single=single.replace('href="/style.css"',`href="/style.css?v=${cssVersion}"`);
 for(const file of ['index.html','current.html','alternatives.html','reference.html','sources.html','read.html','ip.html','empty-states.html',...all.map(p=>`pages/${p.id}.html`)])fs.writeFileSync(path.join(out,file),single);
 // A static text companion is generated from the exact same content as the HTML.
 const html=fs.readFileSync(path.join(out,'read.html'),'utf8');
 const plain=html.replace(/<head>[\s\S]*?<\/head>/,'').replace(/<[^>]+>/g,'\n').replaceAll('&amp;','&').replaceAll('&lt;','<').replaceAll('&gt;','>').replaceAll('&quot;','"').replace(/\n{3,}/g,'\n\n');
 fs.writeFileSync(path.join(out,'reading.txt'),plain);
-const markdown=html.replace(/<head>[\s\S]*?<\/head>/,'').replace(/<h([123])[^>]*>(.*?)<\/h\1>/g,(_,level,title)=>'\n\n'+'#'.repeat(Number(level))+' '+title+'\n\n').replace(/<img[^>]*src="\/([^"]+)"[^>]*alt="([^"]*)"[^>]*>/g,'\n\n![$2](dist/$1)\n\n').replace(/<[^>]+>/g,'\n').replaceAll('&amp;','&').replaceAll('&lt;','<').replaceAll('&gt;','>').replaceAll('&quot;','"').replace(/\n{3,}/g,'\n\n');
+const markdown=html.replace(/<head>[\s\S]*?<\/head>/,'').replace(/<h([1234])[^>]*>(.*?)<\/h\1>/g,(_,level,title)=>'\n\n'+'#'.repeat(Number(level))+' '+title+'\n\n').replace(/<img[^>]*src="\/([^"]+)"[^>]*alt="([^"]*)"[^>]*>/g,'\n\n![$2](dist/$1)\n\n').replace(/<[^>]+>/g,'\n').replaceAll('&amp;','&').replaceAll('&lt;','<').replaceAll('&gt;','>').replaceAll('&quot;','"').replace(/\n{3,}/g,'\n\n');
 fs.writeFileSync('READING.md',markdown);
 fs.writeFileSync(path.join(out,'asset-provenance.json'),JSON.stringify({updated:'2026-10-05',assets:provenance},null,2));
 fs.writeFileSync(path.join(out,'robots.txt'),'User-agent: *\nAllow: /\n');
