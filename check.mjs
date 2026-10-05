@@ -9,6 +9,8 @@ for(const file of pages){const html=fs.readFileSync(path.join(root,file),'utf8')
 assert.equal(pages.length,56);
 const read=fs.readFileSync(path.join(root,'read.html'),'utf8');
 assert.doesNotMatch(read,/<script|<iframe|<details|display:none/);
+assert.equal(fs.readFileSync(path.join(root,'index.html'),'utf8'),read);
+for(const file of pages){const content=fs.readFileSync(path.join(root,file),'utf8');assert.equal(content,read);for(const m of content.matchAll(/href="#([^"]+)"/g))assert.ok(content.includes(`id="${m[1]}"`));assert.doesNotMatch(content,/href="\/(?:pages|ip|current|alternatives|reference|empty-states|read)/);}
 assert.equal((read.match(/<article id=/g)||[]).length,48);
 for(const term of ['候选代码','未合并','3.0','未实现','保存','不存'])assert.ok(read.includes(term),term);
 const assets=JSON.parse(fs.readFileSync(path.join(root,'asset-provenance.json'),'utf8')).assets;

@@ -67,6 +67,24 @@ for(const file of ['index.html','read.html']){
 for(const file of ['index.html','current.html','alternatives.html','reference.html','sources.html','read.html','ip.html','empty-states.html',...all.map(p=>`pages/${p.id}.html`)]){
  const filePath=path.join(out,file);fs.writeFileSync(filePath,fs.readFileSync(filePath,'utf8').replace('</nav>','<a href="/ip.html">IP 角色</a><a href="/empty-states.html">缺省状态</a></nav>'));
 }
+// One long document everywhere; old URLs remain compatible, never secondary views.
+const sectionNav='<header><nav aria-label="本页章节定位"><a class="brand" href="#top">go!</a><a href="#current">当前产品</a><a href="#alternatives">备选设计</a><a href="#ip">IP 角色</a><a href="#empty-states">缺省状态</a><a href="#archive">历史图册</a></nav></header>';
+let single=fs.readFileSync(path.join(out,'read.html'),'utf8')
+ .replace(/<header>[\s\S]*?<\/header>/,sectionNav)
+ .replace('<main>','<main id="top">')
+ .replace('<h2>一、当前实现','<h2 id="current">一、当前实现')
+ .replace('<h2>二、未来方向','<h2 id="alternatives">二、未来方向')
+ .replace('<h2>三、旧版','<h2 id="archive">三、旧版')
+ .replace(/<a class="anchor-link"[^>]*>[\s\S]*?<\/a>/g,'')
+ .replace(/<p><a href="\/pages\/[^\"]+">独立说明<\/a><\/p>/g,'')
+ .replace(/<a href="\/reading.txt">纯文字副本<\/a>/,'')
+ .replace(/<footer>[\s\S]*?<\/footer>/,'<footer>go! 产品阅览室 · 所有内容已在本页展开 · 公开去敏快照</footer>')
+ .replace('阅读順序：产品意图 → 现状 → 备选 → 历史参考 → 来源。','顶部导航仅在本页定位，不打开二级页面；也可以直接向下滚动阅读全部内容。');
+// Put IP and empty states before the historical appendix, in the main reading flow.
+single=single.replace(extras.characters,'').replace(extras.empties,'').replace('<h2 id="archive">',extras.characters+extras.empties+'<h2 id="archive">');
+single=single.replace(extras.empties,extras.empties.replace('全部直接展开。','全部直接展开。共 4 个部分、4 张截图：① 首页空内容 1 张；② 事情详情空内容 1 张；③ AI 整理失败 1 张；④ 备份失败 1 张。').replace('<article>','<div class="empty-gallery"><article>').replace('<h3>尚未找到独立定稿</h3>','</div><h3>尚未找到独立定稿</h3>'));
+single=single.replace(/<p><a href="\/pages\/[^\"]+">独立说明<\/a><\/p>/g,'').replace('单页链接方便定位，不隐藏额外规则。','顶部导航只定位本页章节，不打开二级页面。').replace('首页只有“输入→生成一行→完成／撤销→重置”的局部模拟；','本页不再提供输入模拟，全部以静态图文展示；').replace('有操作能力也只能运行网站实际实现的模拟。','本页不依赖任何浏览器操作能力。');
+for(const file of ['index.html','current.html','alternatives.html','reference.html','sources.html','read.html','ip.html','empty-states.html',...all.map(p=>`pages/${p.id}.html`)])fs.writeFileSync(path.join(out,file),single);
 // A static text companion is generated from the exact same content as the HTML.
 const html=fs.readFileSync(path.join(out,'read.html'),'utf8');
 const plain=html.replace(/<head>[\s\S]*?<\/head>/,'').replace(/<[^>]+>/g,'\n').replaceAll('&amp;','&').replaceAll('&lt;','<').replaceAll('&gt;','>').replaceAll('&quot;','"').replace(/\n{3,}/g,'\n\n');
