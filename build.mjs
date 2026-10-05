@@ -84,6 +84,8 @@ let single=fs.readFileSync(path.join(out,'read.html'),'utf8')
 single=single.replace(extras.characters,'').replace(extras.empties,'').replace('<h2 id="archive">',extras.characters+extras.empties+'<h2 id="archive">');
 single=single.replace(extras.empties,extras.empties.replace('全部直接展开。','全部直接展开。共 4 个部分、4 张截图：① 首页空内容 1 张；② 事情详情空内容 1 张；③ AI 整理失败 1 张；④ 备份失败 1 张。').replace('<article>','<div class="empty-gallery"><article>').replace('<h3>尚未找到独立定稿</h3>','</div><h3>尚未找到独立定稿</h3>'));
 single=single.replace(/<p><a href="\/pages\/[^\"]+">独立说明<\/a><\/p>/g,'').replace('单页链接方便定位，不隐藏额外规则。','顶部导航只定位本页章节，不打开二级页面。').replace('首页只有“输入→生成一行→完成／撤销→重置”的局部模拟；','本页不再提供输入模拟，全部以静态图文展示；').replace('有操作能力也只能运行网站实际实现的模拟。','本页不依赖任何浏览器操作能力。');
+// Earlier string rewriting left an unstyled duplicate after the reading section.
+for(const id of ['ip','empty-states']){let seen=false;single=single.replace(new RegExp(`<section id="${id}">[\\s\\S]*?<\\/section>`,'g'),section=>{if(seen)return '';seen=true;return section;});}
 for(const file of ['index.html','current.html','alternatives.html','reference.html','sources.html','read.html','ip.html','empty-states.html',...all.map(p=>`pages/${p.id}.html`)])fs.writeFileSync(path.join(out,file),single);
 // A static text companion is generated from the exact same content as the HTML.
 const html=fs.readFileSync(path.join(out,'read.html'),'utf8');

@@ -1,4 +1,7 @@
 @charset "UTF-8";
+/* Safety ceiling applies to every image, regardless of section nesting. */
+body main img{max-height:min(440px,60vh)!important;object-fit:contain!important}
+body #empty-states img{max-height:min(360px,55vh)!important}
 /* Long-page gallery: complete screenshots at reading size, never viewport-wide. */
 main img{display:block;max-width:100%;height:auto;object-fit:contain}
 #ip,#empty-states,#reading-guide{padding:36px 0;border-top:1px solid var(--line);scroll-margin-top:110px}

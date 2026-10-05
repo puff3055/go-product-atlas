@@ -8,6 +8,9 @@ let links=0,images=0;
 for(const file of pages){const html=fs.readFileSync(path.join(root,file),'utf8');assert.match(html,/<html lang="zh-CN">/);assert.match(html,/<h1>/);for(const match of html.matchAll(/(?:href|src)="([^"#]+)(?:#[^"]*)?"/g)){const url=match[1];assert.ok(url.startsWith('/'),'Assets and navigation must be same-origin: '+url);const target=url==='/'?'index.html':url.slice(1);assert.ok(fs.existsSync(path.join(root,target)),`${file}: missing ${url}`);links++;}for(const match of html.matchAll(/<img\b[^>]*>/g)){assert.match(match[0],/alt="[^" ]+/);images++;}assert.doesNotMatch(html,/\/Users\/|sk-[a-zA-Z0-9_-]{12,}|PRIVATE KEY|00008150|github\.com\/puff|api\.deepseek/);}
 assert.equal(pages.length,56);
 const read=fs.readFileSync(path.join(root,'read.html'),'utf8');
+const ids=[...read.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(ids.length,new Set(ids).size,'No duplicated sections or IDs');
+assert.equal((read.match(/class="empty-gallery"/g)||[]).length,1);
+assert.match(fs.readFileSync(path.join(root,'style.css'),'utf8'),/body main img\{max-height:min\(440px,60vh\)!important/);
 assert.doesNotMatch(read,/<script|<iframe|<details|display:none/);
 assert.equal(fs.readFileSync(path.join(root,'index.html'),'utf8'),read);
 for(const file of pages){const content=fs.readFileSync(path.join(root,file),'utf8');assert.equal(content,read);for(const m of content.matchAll(/href="#([^"]+)"/g))assert.ok(content.includes(`id="${m[1]}"`));assert.doesNotMatch(content,/href="\/(?:pages|ip|current|alternatives|reference|empty-states|read)/);}
